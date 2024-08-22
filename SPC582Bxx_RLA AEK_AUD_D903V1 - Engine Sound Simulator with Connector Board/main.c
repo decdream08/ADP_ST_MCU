@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* Copyright ï¿½ 2015-2019 STMicroelectronics - All Rights Reserved
+* Copyright ï¿?2015-2019 STMicroelectronics - All Rights Reserved
 *
 * License terms: STMicroelectronics Proprietary in accordance with licensing
 * terms SLA0098 at www.st.com.
@@ -8,7 +8,7 @@
 * THIS SOFTWARE IS DISTRIBUTED "AS IS," AND ALL WARRANTIES ARE DISCLAIMED, 
 * INCLUDING MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 *
-* EVALUATION ONLY ï¿½ NOT FOR USE IN PRODUCTION
+* EVALUATION ONLY ï¿?NOT FOR USE IN PRODUCTION
 *****************************************************************************/
 
 
@@ -21,6 +21,12 @@
 #include "AEK_AUD_D903V1.h"
 #include "saradc_lld_cfg.h"
 #include "can_lld_cfg.h"
+
+#define CAN_TEST	TRUE //DDD...TEST
+
+#ifdef CAN_TEST
+#include "CANCommunication.h" //DDD...TEST
+#endif
 
 /* Define application states*/
 #define STOP		0U     // STOP =
@@ -113,6 +119,49 @@ void key_press(void)
 
 /*receive CAN callback */
 void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
+#ifdef CAN_TEST //DDD...TEST
+{
+	(void)msgbuf;
+
+	if (crfp.ID == START_STOP_SID)
+	{
+		if (crfp.data32[0] == PLAY_SOUND) //START
+		{
+			state = START;
+		}
+		else if(crfp.data32[0] == STOP_SOUND) //STOP
+		{
+			state = STOP;
+		}
+	}
+	else if (crfp.ID == CHANGE_RPM_SID)  // RPM
+	{
+	   if(crfp.data32[0] == TURN_UP_RPM)  // Turn up rpm step 100
+	   {
+		   if(rpm1 < 3400)
+		   {
+			   rpm1 += 500;
+		   }
+	   }
+	   else if(crfp.data32[0] == TURN_DOWN_RPM) // Turn down rpm step 100
+	   {
+		   if(rpm1 > 100)
+		   {
+			   rpm1 -= 500;
+		   }
+	   }
+	}
+	else if (crfp.ID == VOLUME_SID)  // Volume
+	{
+	   if(crfp.data32[0] > 0 && crfp.data32[0] < 100)  // Turn up rpm -step 100
+	   {
+		   vol = crfp.data32[0];
+
+	   }
+	}
+
+}
+#else
 {
 	(void)msgbuf;
 
@@ -129,6 +178,7 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 	}
 
 }
+#endif
 
 void mcanconf_errorcb(CANDriver *canp, uint32_t psr){
   /* write error management code here */
@@ -991,9 +1041,11 @@ int main(void)
 					playSound(vol, userFunction);
 					DiagnosticInPlay();
 					LoadStatusDetectionInPlay();
+#ifndef CAN_TEST //DDD...TEST
 					detectVolumeRange();
 					detectRpmRange();
 					readADC();
+#endif
 				}
 	      	}
     }

@@ -3095,7 +3095,7 @@
                     <value>1</value>
                   </nsjw>
                   <ntseg1>
-                    <value>58</value>
+                    <value>2</value>
                   </ntseg1>
                   <ntseg2>
                     <value>3</value>
@@ -3107,10 +3107,10 @@
                     <value>8000000</value>
                   </can_subsytem_1_protocol_clock>
                   <can_subsytem_0_calculated_bit_rate disabled="true">
-                    <value>125000</value>
+                    <value>1000000</value>
                   </can_subsytem_0_calculated_bit_rate>
                   <can_subsytem_1_calculated_bit_rate disabled="true">
-                    <value>125000</value>
+                    <value>1000000</value>
                   </can_subsytem_1_calculated_bit_rate>
                 </timings>
                 <canfd_operation>
@@ -3152,8 +3152,8 @@
                   </can_subsytem_1_canfd_bit_rate>
                 </canfd_operation>
                 <rx_buffer_configuration>
-                  <interrupt index="1">
-                    <value>LINE0</value>
+                  <interrupt index="2">
+                    <value>LINE1</value>
                   </interrupt>
                   <callback>
                     <value>rxreceive</value>
@@ -3171,6 +3171,28 @@
                       </filter_value>
                       <rx_buffer_number>
                         <value>17</value>
+                      </rx_buffer_number>
+                    </filter>
+                    <filter>
+                      <filter_type index="0">
+                        <value>Standard</value>
+                      </filter_type>
+                      <filter_value>
+                        <value>0x7f1</value>
+                      </filter_value>
+                      <rx_buffer_number>
+                        <value>10</value>
+                      </rx_buffer_number>
+                    </filter>
+                    <filter>
+                      <filter_type index="0">
+                        <value>Standard</value>
+                      </filter_type>
+                      <filter_value>
+                        <value>0x7f2</value>
+                      </filter_value>
+                      <rx_buffer_number>
+                        <value>3</value>
                       </rx_buffer_number>
                     </filter>
                   </rx_buffer_filters>
