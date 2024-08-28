@@ -22,10 +22,12 @@
 #include "saradc_lld_cfg.h"
 #include "can_lld_cfg.h"
 
-#define CAN_TEST	TRUE //DDD...TEST
+#define CAN_TEST					TRUE //KMS240822_1 : To Add CAN function
+#define ESTEC_CAN_PORT				TRUE //KMS240827_1 : To use CAN4 Port as M-CAN
+#define ESTEC_PIN_MAP				TRUE //KMS240827_2 : To use ESTEC PIN MAP
 
 #ifdef CAN_TEST
-#include "CANCommunication.h" //DDD...TEST
+#include "CANCommunication.h" //KMS240822_1 : To Add CAN function
 #endif
 
 /* Define application states*/
@@ -33,8 +35,10 @@
 #define START 		1U
 
 /* Define LED error */
-#define ERROR_BOARD0_TURN_ON_LED()     	siul_lld_setpad(PORT_LED_4, LED_4)
-#define ERROR_BOARD1_LED_TOGGLE()     	siul_lld_setpad(PORT_LED_3, LED_3)
+#ifndef ESTEC_PIN_MAP
+#define ERROR_BOARD0_TURN_ON_LED()     	siul_lld_setpad(PORT_LED_4_GPIO75, LED_4_GPIO75) //KMS240822_2 : Changed pin name
+#define ERROR_BOARD1_LED_TOGGLE()     	siul_lld_setpad(PORT_LED_3_GPIO11, LED_3_GPIO11) //KMS240822_2 : Changed pin name
+#endif
 
 /* DISTRIBUTED_AVAS_SYSTEM = FALSE for use AVAS-System alone
  * DISTRIBUTED_AVAS_SYSTEM = TRUE for using AVAS-System connected to main ECU (e.g. Chorus 4M)*/
@@ -98,7 +102,11 @@ uint32_t sendCanMessage(uint32_t message)
 	 txf.DLC = 8U;
 	 txf.data32[0] = message;  // STOP
 
+#ifdef ESTEC_CAN_PORT //KMS240827_1 : To use CAN4 Port as M-CAN
+	return can_lld_transmit(&CAND3, CAN_ANY_TXBUFFER, &txf);
+#else //ESTEC_CAN_PORT
 	 return can_lld_transmit(&CAND4, CAN_ANY_TXBUFFER, &txf);
+#endif //ESTEC_CAN_PORT
 }
 #endif
 
@@ -119,7 +127,7 @@ void key_press(void)
 
 /*receive CAN callback */
 void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
-#ifdef CAN_TEST //DDD...TEST
+#ifdef CAN_TEST //KMS240822_1 : To Add CAN function
 {
 	(void)msgbuf;
 
@@ -935,7 +943,9 @@ void LoadStatusDetectionInMute()
 {
 	if ( FDA903_Errors[AEK_AUD_D903V1_DEV0].B.OPENLOAD_DC == 1)
 	{
+#ifndef ESTEC_PIN_MAP
 		ERROR_BOARD0_TURN_ON_LED();
+#endif
 		if(avasFault != 1)
 		{
 			avasFault = 1;
@@ -948,7 +958,9 @@ void LoadStatusDetectionInMute()
 	{
 		if(avasFault == 1)
 		{
-			siul_lld_clearpad(PORT_LED_4, LED_4);
+#ifndef ESTEC_PIN_MAP
+			siul_lld_clearpad(PORT_LED_4_GPIO75, LED_4_GPIO75); //KMS240822_2 : Changed pin name
+#endif
 			avasFault = 0;
 			#if (DISTRIBUTED_AVAS_SYSTEM == TRUE)
 			 sendCanMessage(NO_FAULT_MUTE);
@@ -964,7 +976,9 @@ void LoadStatusDetectionInPlay()
 {
 	if ( FDA903_Errors[AEK_AUD_D903V1_DEV0].B.OPENLOAD_IN_PLAY_TEST_IS_VALID == 1 && FDA903_Errors[AEK_AUD_D903V1_DEV0].B.OPENLOAD_PLAY == 1)
 	{
+#ifndef ESTEC_PIN_MAP
 		ERROR_BOARD0_TURN_ON_LED();
+#endif
 		if(avasFault != 1)
 		{
 			avasFault = 1;
@@ -977,7 +991,9 @@ void LoadStatusDetectionInPlay()
 	{
 		if(avasFault == 1)
 		{
-			siul_lld_clearpad(PORT_LED_4, LED_4);
+#ifndef ESTEC_PIN_MAP
+			siul_lld_clearpad(PORT_LED_4_GPIO75, LED_4_GPIO75); //KMS240822_2 : Changed pin name
+#endif
 			avasFault = 0;
 			#if (DISTRIBUTED_AVAS_SYSTEM == TRUE)
 			 sendCanMessage(NO_FAULT_PLAY);
@@ -1011,11 +1027,15 @@ int main(void)
   AEK_903D_Play(AEK_AUD_D903V1_DEV0);
 
   //Disable hardware Mute.
-  pal_lld_setpad(PORT_PIN_AEK_AUD_D903V1Board0_J10_MUTE_MUTE_GPIO33,PIN_AEK_AUD_D903V1Board0_J10_MUTE_MUTE_GPIO33);
+  pal_lld_setpad(PORT_PIN_AMP_MUTE_GPIO36, PIN_AMP_MUTE_GPIO36);
   
   saradc_lld_start(sarAdc, &saradc_config_saradcconf);
 
+#ifdef ESTEC_CAN_PORT //KMS240827_1 : To use CAN4 Port as M-CAN
+	can_lld_start(&CAND3, &can_config_mcanconf);
+#else //ESTEC_CAN_PORT
   can_lld_start(&CAND4, &can_config_mcanconf); /*MCAN SUB  0 CAN 1*/
+#endif //ESTEC_CAN_PORT
 
   /* Application main loop.*/
   for ( ; ; )
@@ -1041,7 +1061,7 @@ int main(void)
 					playSound(vol, userFunction);
 					DiagnosticInPlay();
 					LoadStatusDetectionInPlay();
-#ifndef CAN_TEST //DDD...TEST
+#ifndef CAN_TEST //KMS240822_1 : To Add CAN function
 					detectVolumeRange();
 					detectRpmRange();
 					readADC();

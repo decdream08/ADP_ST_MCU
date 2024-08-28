@@ -1,5 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SPC5-Patch version="1.0.0">
   <!--It is your patch repository, do not break your XML File.-->
-  <files />
+  <files>
+    <file componentId="com.st.spc5.components.AEK_AUD_D903V1.spc5x_rla" version="1.2.3.202403081304" path="component/lib/src/AEK_AUD_D903V1.c" user="false">
+      <diff><![CDATA[--- components/aek_aud_d903v1_component_rla/lib/src/AEK_AUD_D903V1.c
++++ components/aek_aud_d903v1_component_rla/lib/src/AEK_AUD_D903V1.c
+@@ -1,6 +1,6 @@
+ /****************************************************************************
+ *
+-* Copyright 占� 2020 STMicroelectronics - All Rights Reserved
++* Copyright 占?2020 STMicroelectronics - All Rights Reserved
+ *
+ * License terms: STMicroelectronics Proprietary in accordance with licensing
+ * terms SLA0098 at www.st.com.
+@@ -197,10 +197,14 @@
+ 	switch(I2CAddress[dev])
+ 	{
+ 			case 0xE0:
++#ifdef HW_FIXED_AMP_I2C_ADDR
++				pal_lld_setpad(PORT_PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35, PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35);
++#else //HW_FIXED_AMP_I2C_ADDR
+ 				pal_lld_clearpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]);         //Enable 1 = 0
+ 				pal_lld_setpad(Enables_ARRAY[dev][2], Enables_ARRAY[dev][3]);         	//Enable 2 = 1
+ 				pal_lld_clearpad(Enables_ARRAY[dev][4], Enables_ARRAY[dev][5]);        	//Enable 3 = 0
+ 				pal_lld_clearpad(Enables_ARRAY[dev][6], Enables_ARRAY[dev][7]);         //Enable 4 = 0
++#endif //HW_FIXED_AMP_I2C_ADDR
+ 				break;
+ 			case 0xE2:
+ 				pal_lld_setpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]);           //Enable 1 = 1
+@@ -292,10 +296,21 @@
+ {
+ 	i2c_result_t ret = I2C_NO_ERROR;
+ 
++	//EN1 ~ 4 are all clear here.
++#ifdef HW_FIXED_AMP_I2C_ADDR //KMS240826_1 : Clear I2C sub address pin for Amp
++	pal_lld_clearpad(PORT_PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35, PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35);
++	//pal_lld_clearpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]); 	   
++		//pal_lld_clearpad(Enables_ARRAY[dev][2], Enables_ARRAY[dev][3]); 			
++		//pal_lld_clearpad(Enables_ARRAY[dev][4], Enables_ARRAY[dev][5]); 		
++//		pal_lld_clearpad(Enables_ARRAY[dev][6], Enables_ARRAY[dev][7]);
++
++	//(PORT_PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35, PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35)
++#else //HW_FIXED_AMP_I2C_ADDR
+ 	pal_lld_clearpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]);        
+ 	pal_lld_clearpad(Enables_ARRAY[dev][2], Enables_ARRAY[dev][3]);         	
+ 	pal_lld_clearpad(Enables_ARRAY[dev][4], Enables_ARRAY[dev][5]);        	
+ 	pal_lld_clearpad(Enables_ARRAY[dev][6], Enables_ARRAY[dev][7]);
++#endif //HW_FIXED_AMP_I2C_ADDR
+ 
+ 	osalThreadDelayMilliseconds(500);
+ 
+@@ -307,7 +322,7 @@
+ 		ret = i2c_lld_start(AEK_AUD_D903V1_I2C_ARRAY_DRIVER[dev], AEK_AUD_D903V1_I2C_ARRAY_CONFIGURATION[dev]);
+ 	}
+ 
+-	/* Enables combination 0100 */
++	/* KMS240826_1 : Enables combination 0100 (0xE0) */
+ 	AEK_903D_SetEnables(dev);]]></diff>
+    </file>
+  </files>
 </SPC5-Patch>
