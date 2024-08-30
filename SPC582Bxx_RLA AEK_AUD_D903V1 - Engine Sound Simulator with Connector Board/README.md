@@ -10,3 +10,9 @@
   
 ## 2024-08-28
   - Completed CAN configuration from CAN3(MCAN4) to CAN2(MCAN3)
+## 2024-08-29
+  - Implemented communication code for Speed up/Speed down between MCU and DSP. //KMS240829_1
+
+## 2024-08-30
+  - Configured ESTec pin map in board.c/board.h
+  - Changed RPM reduced condition to avoid malfuction. //KMS240830_1

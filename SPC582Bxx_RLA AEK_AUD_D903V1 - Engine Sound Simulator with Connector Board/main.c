@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* Copyright ï¿?2015-2019 STMicroelectronics - All Rights Reserved
+* Copyright ï¿½?2015-2019 STMicroelectronics - All Rights Reserved
 *
 * License terms: STMicroelectronics Proprietary in accordance with licensing
 * terms SLA0098 at www.st.com.
@@ -8,7 +8,7 @@
 * THIS SOFTWARE IS DISTRIBUTED "AS IS," AND ALL WARRANTIES ARE DISCLAIMED, 
 * INCLUDING MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 *
-* EVALUATION ONLY ï¿?NOT FOR USE IN PRODUCTION
+* EVALUATION ONLY ï¿½?NOT FOR USE IN PRODUCTION
 *****************************************************************************/
 
 
@@ -53,6 +53,11 @@
 /************************ variables section ************************/
 extern uint32_t* engine_start1;
 
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+boolean speed_up = FALSE;
+boolean speed_down = FALSE;
+#endif
+
 boolean acc_first_time = TRUE;
 int16_t* wavfileBeginPtr;   //pointer to wave file data (the first data)
 int16_t* wavfileEndPtr;     //pointer to wave file data (the last data)
@@ -89,7 +94,28 @@ void DiagnosticInPlay(void);
 void DiagnosticInMute(void);
 void LoadStatusDetectionInMute(void);
 void LoadStatusDetectionInPlay(void);
+
 /*********************************************************************/
+
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+void Set_Speed_Up(void)
+{
+	speed_up = FALSE;
+	
+	pal_lld_setpad(PORT_PIN_DSP_MP0_GPIO33, PIN_DSP_MP0_GPIO33);
+	osalThreadDelayMilliseconds(5);
+	pal_lld_clearpad(PORT_PIN_DSP_MP0_GPIO33, PIN_DSP_MP0_GPIO33);
+}
+
+void Set_Speed_Down(void)
+{
+	speed_down = FALSE;
+
+	pal_lld_setpad(PORT_PIN_DSP_MP1_GPIO66, PIN_DSP_MP1_GPIO66);
+	osalThreadDelayMilliseconds(5);
+	pal_lld_clearpad(PORT_PIN_DSP_MP1_GPIO66, PIN_DSP_MP1_GPIO66);
+}
+#endif
 
 #if (DISTRIBUTED_AVAS_SYSTEM == TRUE)
 uint32_t sendCanMessage(uint32_t message)
@@ -133,6 +159,10 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 
 	if (crfp.ID == START_STOP_SID)
 	{
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+		speed_up = FALSE;
+		speed_down = FALSE;
+#endif
 		if (crfp.data32[0] == PLAY_SOUND) //START
 		{
 			state = START;
@@ -149,13 +179,20 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 		   if(rpm1 < 3400)
 		   {
 			   rpm1 += 500;
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+			   speed_up = TRUE;				
+#endif
+
 		   }
 	   }
 	   else if(crfp.data32[0] == TURN_DOWN_RPM) // Turn down rpm step 100
 	   {
-		   if(rpm1 > 100)
+		   if(rpm1 > 800)//if(rpm1 > 100) //KMS240830_1 : the range of rpm1 is from 800 to 3400.
 		   {
 			   rpm1 -= 500;
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+				speed_down = TRUE;
+#endif
 		   }
 	   }
 	}
@@ -459,8 +496,8 @@ uint32_t userFunction()
 	uint16_t sampleWav;
 	sampleWav = ( *wavfilePtr << 8) | ((*wavfilePtr >> 8) & 0xFF);       //row data sample, change endian
 	amplitude = (int32_t)sampleWav;
-
-	if (rpm1 <= 2200)
+		
+	if (rpm1 <= 2200) /* rpm 800 ~ 3400 */
 	{
 		if(rpm1 == 900)
 		{
@@ -872,7 +909,6 @@ uint32_t userFunction()
 				j = 0;
 			}
 		}
-
 		else if(rpm1 == 3400)
 		{
 			if( j  < 11 )
@@ -1037,10 +1073,14 @@ int main(void)
   can_lld_start(&CAND4, &can_config_mcanconf); /*MCAN SUB  0 CAN 1*/
 #endif //ESTEC_CAN_PORT
 
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+	speed_up = FALSE;
+	speed_down = FALSE;
+#endif
+
   /* Application main loop.*/
   for ( ; ; )
     {
-
 	  switch (state)
 	      	{
 				case STOP:
@@ -1057,7 +1097,14 @@ int main(void)
 				case START:
 				AEK_903D_Play(AEK_AUD_D903V1_DEV0);
 				while (state == START)
-				{
+				{					
+#ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+					if(speed_up == TRUE)
+						Set_Speed_Up();
+			
+					if(speed_down == TRUE)
+						Set_Speed_Down();
+#endif
 					playSound(vol, userFunction);
 					DiagnosticInPlay();
 					LoadStatusDetectionInPlay();
