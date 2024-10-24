@@ -22,11 +22,11 @@
 #include "saradc_lld_cfg.h"
 #include "can_lld_cfg.h"
 
-#define CAN_TEST					TRUE //KMS240822_1 : To Add CAN function
+#define ESTEC_CAN_CONFIG					TRUE //KMS240822_1 : To Add CAN function
 #define ESTEC_CAN_PORT				TRUE //KMS240827_1 : To use CAN4 Port as M-CAN
 #define ESTEC_PIN_MAP				TRUE //KMS240827_2 : To use ESTEC PIN MAP
 
-#ifdef CAN_TEST
+#ifdef ESTEC_CAN_CONFIG
 #include "CANCommunication.h" //KMS240822_1 : To Add CAN function
 #endif
 
@@ -153,7 +153,7 @@ void key_press(void)
 
 /*receive CAN callback */
 void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
-#ifdef CAN_TEST //KMS240822_1 : To Add CAN function
+#ifdef ESTEC_CAN_CONFIG //KMS240822_1 : To Add CAN function
 {
 	(void)msgbuf;
 
@@ -176,13 +176,12 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 	{
 	   if(crfp.data32[0] == TURN_UP_RPM)  // Turn up rpm step 100
 	   {
-		   if(rpm1 < 3400)
+		   if(rpm1 <= 2800)//if(rpm1 < 3400) //KMS241024_1 : To avoid no sound issue when rpm1 is over than Max rpm(3300).
 		   {
 			   rpm1 += 500;
 #ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
 			   speed_up = TRUE;				
 #endif
-
 		   }
 	   }
 	   else if(crfp.data32[0] == TURN_DOWN_RPM) // Turn down rpm step 100
@@ -1056,6 +1055,11 @@ int main(void)
 
   initWaveFile(&engine_start1, 6);
 
+#ifdef ESTEC_PIN_MAP //KMS240927_1 : Clear GPIO Port
+	pal_lld_clearpad(PORT_PIN_DSP_MP0_GPIO33, MSCR_IO_PIN_DSP_MP0_GPIO33);
+	pal_lld_clearpad(PORT_PIN_DSP_MP1_GPIO66, MSCR_IO_PIN_DSP_MP1_GPIO66);
+#endif
+
   AEK_903D_Init(AEK_AUD_D903V1_DEV0);
 
   AEK_903D_SetDefaultRegisters(AEK_AUD_D903V1_DEV0);
@@ -1076,6 +1080,10 @@ int main(void)
 #ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
 	speed_up = FALSE;
 	speed_down = FALSE;
+#endif
+
+#ifdef ESTEC_PIN_MAP
+  pal_lld_setpad(PORT_PIN_DSP_RESET_GPIO44, PIN_DSP_RESET_GPIO44); //KMS241023_2 : To delay High state of DSP_RESET(GPIO44) Pin due to DSP selfboot mode.
 #endif
 
   /* Application main loop.*/
@@ -1108,7 +1116,7 @@ int main(void)
 					playSound(vol, userFunction);
 					DiagnosticInPlay();
 					LoadStatusDetectionInPlay();
-#ifndef CAN_TEST //KMS240822_1 : To Add CAN function
+#ifndef ESTEC_CAN_CONFIG //KMS240822_1 : To Add CAN function
 					detectVolumeRange();
 					detectRpmRange();
 					readADC();

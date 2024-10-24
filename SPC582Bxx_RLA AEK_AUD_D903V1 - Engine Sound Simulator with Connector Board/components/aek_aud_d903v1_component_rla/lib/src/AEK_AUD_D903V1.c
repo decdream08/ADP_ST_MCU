@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* Copyright ï¿?2020 STMicroelectronics - All Rights Reserved
+* Copyright ï¿½?2020 STMicroelectronics - All Rights Reserved
 *
 * License terms: STMicroelectronics Proprietary in accordance with licensing
 * terms SLA0098 at www.st.com.
@@ -299,12 +299,6 @@ i2c_result_t AEK_903D_Init(AEK_AUD_D903V1_DEVICE dev)
 	//EN1 ~ 4 are all clear here.
 #ifdef HW_FIXED_AMP_I2C_ADDR //KMS240826_1 : Clear I2C sub address pin for Amp
 	pal_lld_clearpad(PORT_PIN_AMP_EN2_GPIO35, PIN_AMP_EN2_GPIO35);
-	//pal_lld_clearpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]); 	   
-		//pal_lld_clearpad(Enables_ARRAY[dev][2], Enables_ARRAY[dev][3]); 			
-		//pal_lld_clearpad(Enables_ARRAY[dev][4], Enables_ARRAY[dev][5]); 		
-//		pal_lld_clearpad(Enables_ARRAY[dev][6], Enables_ARRAY[dev][7]);
-
-	//(PORT_PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35, PIN_AEK_AUD_D903V1Board0_J10_EN2_EN2_GPIO35)
 #else //HW_FIXED_AMP_I2C_ADDR
 	pal_lld_clearpad(Enables_ARRAY[dev][0], Enables_ARRAY[dev][1]);        
 	pal_lld_clearpad(Enables_ARRAY[dev][2], Enables_ARRAY[dev][3]);         	
