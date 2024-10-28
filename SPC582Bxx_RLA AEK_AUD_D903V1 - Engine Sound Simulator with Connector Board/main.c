@@ -25,6 +25,7 @@
 #define ESTEC_CAN_CONFIG					TRUE //KMS240822_1 : To Add CAN function
 #define ESTEC_CAN_PORT				TRUE //KMS240827_1 : To use CAN4 Port as M-CAN
 #define ESTEC_PIN_MAP				TRUE //KMS240827_2 : To use ESTEC PIN MAP
+#define ESTEC_AVAS_OUT_DSP			TRUE //KMS241025_1 : If you define this, it send speed CMD to only DSP side to output DSP side.
 
 #ifdef ESTEC_CAN_CONFIG
 #include "CANCommunication.h" //KMS240822_1 : To Add CAN function
@@ -180,7 +181,9 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 		   {
 			   rpm1 += 500;
 #ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
-			   speed_up = TRUE;				
+#ifndef ESTEC_AVAS_OUT_DSP //KMS241025_1
+			   speed_up = TRUE;
+#endif
 #endif
 		   }
 	   }
@@ -190,11 +193,23 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 		   {
 			   rpm1 -= 500;
 #ifdef ESTEC_PIN_MAP //KMS240829_1 : Implemented communication code for Speed up/Speed down between MCU and DSP
+#ifdef ESTEC_AVAS_OUT_DSP //KMS241025_1
 				speed_down = TRUE;
+#endif
 #endif
 		   }
 	   }
+#ifdef ESTEC_AVAS_OUT_DSP //KMS241025_1
+	   else if(crfp.data32[0] == SPEED_UP_CMD_FOR_DSP)
+	   {
+			speed_up = TRUE;
+		   }
+	   else if(crfp.data32[0] == SPEED_DOWN_CMD_FOR_DSP)
+	   {
+			speed_down = TRUE;
+	   }
 	}
+#endif
 	else if (crfp.ID == VOLUME_SID)  // Volume
 	{
 	   if(crfp.data32[0] > 0 && crfp.data32[0] < 100)  // Turn up rpm -step 100
@@ -203,7 +218,6 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 
 	   }
 	}
-
 }
 #else
 {
