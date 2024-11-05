@@ -26,6 +26,7 @@
 #define ESTEC_CAN_PORT				TRUE //KMS240827_1 : To use CAN4 Port as M-CAN
 #define ESTEC_PIN_MAP				TRUE //KMS240827_2 : To use ESTEC PIN MAP
 #define ESTEC_AVAS_OUT_DSP			TRUE //KMS241025_1 : If you define this, it send speed CMD to only DSP side to output DSP side.
+#define ESTEC_AVAS_SOUND_FILE		TRUE //KMS241101_1 : To change AVAS sound into ESTec Sound File
 
 #ifdef ESTEC_CAN_CONFIG
 #include "CANCommunication.h" //KMS240822_1 : To Add CAN function
@@ -502,7 +503,11 @@ uint32_t userFunction()
 
 	if(wavfilePtr > wavfileEndPtr)
 	{
+#ifdef ESTEC_AVAS_SOUND_FILE //KMS241101_1 : To avoid, tick tick noise when it plays first time by repeat.
+		wavfilePtr =  wavfileBeginPtr;
+#else
 		wavfilePtr =  wavfileBeginPtr + 90000;
+#endif
 	}
 
 	int32_t amplitude = 0;

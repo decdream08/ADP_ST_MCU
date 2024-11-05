@@ -332,7 +332,6 @@ void playSound( int volume, uint32_t (*sample_source)(void))
 			devNumberStereo = 0;
 	   }
 	   #endif
-
 	   
 	   load_new_sample = 0;
     }

@@ -34,6 +34,9 @@
 #define TURN_UP_RPM 		0xBBAACCDDUL
 #define TURN_DOWN_RPM		0xBBAADDCCUL
 
+//KMS241025_1 : To Seperate Speed up/down action between MCU AVAS and DSP AVAS, we add CAN CMD.
+#define SPEED_UP_CMD_FOR_DSP	0x11223344UL 
+#define SPEED_DOWN_CMD_FOR_DSP	0x99887766UL
 
 // Turn Up and Down Volume. The value received by Avas system have to be in the range [0 - 100]
 #define VOLUME_SID		0x7f2U
