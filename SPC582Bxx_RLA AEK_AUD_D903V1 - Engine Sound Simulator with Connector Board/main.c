@@ -60,6 +60,10 @@ boolean speed_up = FALSE;
 boolean speed_down = FALSE;
 #endif
 
+#ifdef ESTEC_CAN_CONFIG
+boolean source_change = FALSE; //KMS241112_1
+#endif
+
 boolean acc_first_time = TRUE;
 int16_t* wavfileBeginPtr;   //pointer to wave file data (the first data)
 int16_t* wavfileEndPtr;     //pointer to wave file data (the last data)
@@ -118,6 +122,17 @@ void Set_Speed_Down(void)
 	pal_lld_clearpad(PORT_PIN_DSP_MP1_GPIO66, PIN_DSP_MP1_GPIO66);
 }
 #endif
+#ifdef ESTEC_CAN_CONFIG
+void Set_Source_Change(void) //KMS241112_1 : DSP Source Change(Audio Input Change)
+{
+	source_change = FALSE;
+
+	pal_lld_clearpad(PORT_PIN_DSP_SOURCE_CHANGE_GPIO82, PIN_DSP_SOURCE_CHANGE_GPIO82);
+	osalThreadDelayMilliseconds(5);
+	pal_lld_setpad(PORT_PIN_DSP_SOURCE_CHANGE_GPIO82, PIN_DSP_SOURCE_CHANGE_GPIO82);
+}
+
+#endif
 
 #if (DISTRIBUTED_AVAS_SYSTEM == TRUE)
 uint32_t sendCanMessage(uint32_t message)
@@ -143,6 +158,7 @@ uint32_t sendCanMessage(uint32_t message)
  */
 void key_press(void)
 {
+#ifndef ESTEC_CAN_PORT
 	if (state == STOP)
 	{
 		state = START;
@@ -151,6 +167,7 @@ void key_press(void)
 	{
 		state = STOP;
 	}
+#endif
 }
 
 /*receive CAN callback */
@@ -209,8 +226,14 @@ void mcanconf_rxreceive(uint32_t msgbuf, CANRxFrame crfp)
 	   {
 			speed_down = TRUE;
 	   }
-	}
 #endif
+#ifdef ESTEC_CAN_CONFIG
+	   else if(crfp.data32[0] == SOURCE_CHANGE_CMD_FOR_DSP) //KMS241112_1 : Source Change
+	   {
+		   source_change = TRUE;
+	   }
+#endif
+	}
 	else if (crfp.ID == VOLUME_SID)  // Volume
 	{
 	   if(crfp.data32[0] > 0 && crfp.data32[0] < 100)  // Turn up rpm -step 100
@@ -1116,8 +1139,15 @@ int main(void)
 				while (state == STOP)
 				{
 					playSound(vol, muteSamples);
+#ifdef ESTEC_CAN_CONFIG //KMS241112_1
+				if(source_change == TRUE)
+				{
+					Set_Source_Change();
+				}
+#else //KMS241112_2
 					DiagnosticInMute();
 					LoadStatusDetectionInMute();
+#endif
 				}
 				break;
 
@@ -1132,10 +1162,18 @@ int main(void)
 					if(speed_down == TRUE)
 						Set_Speed_Down();
 #endif
+#ifdef ESTEC_CAN_CONFIG //KMS241112_1
+					if(source_change == TRUE)
+					{
+						Set_Source_Change();
+					}
+#endif
 					playSound(vol, userFunction);
+#ifndef ESTEC_CAN_CONFIG //KMS241112_2
 					DiagnosticInPlay();
 					LoadStatusDetectionInPlay();
-#ifndef ESTEC_CAN_CONFIG //KMS240822_1 : To Add CAN function
+
+					//KMS240822_1 : To Add CAN function
 					detectVolumeRange();
 					detectRpmRange();
 					readADC();

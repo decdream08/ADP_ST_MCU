@@ -33,6 +33,8 @@
 #define CHANGE_RPM_SID		0x7f1U
 #define TURN_UP_RPM 		0xBBAACCDDUL
 #define TURN_DOWN_RPM		0xBBAADDCCUL
+//KMS241112_1 : To Add Source Change
+#define SOURCE_CHANGE_CMD_FOR_DSP	0x22334455UL
 
 //KMS241025_1 : To Seperate Speed up/down action between MCU AVAS and DSP AVAS, we add CAN CMD.
 #define SPEED_UP_CMD_FOR_DSP	0x11223344UL 

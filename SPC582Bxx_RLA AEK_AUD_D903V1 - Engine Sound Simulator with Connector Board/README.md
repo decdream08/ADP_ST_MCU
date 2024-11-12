@@ -32,9 +32,13 @@
 
 ## 2024-10-24
   - To avoid no sound issue when rpm1 is over than Max rpm(3300). //KMS241024_1
-  ## 2024-10-25
+  
+## 2024-10-25
   - To Seperate Speed up/down action between MCU AVAS and DSP AVAS, we add CAN CMD. //KMS241025_1
   
 ## 2024-11-01
   - To change AVAS sound into ESTec Sound File and To avoid, tick tick noise when it plays first time by repeat. //KMS241101_1
-  - AVAS_8sec_FadeIn_Out.wav file is based on LG AVAS Sound. It has 150ms fade time both In/Out.
+  - AVAS_8sec_FadeIn_Out.wav file is based on LG AVAS Sound. It has 150ms fade time both In/Out.  
+## 2024-11-12
+  - To implement Source Change with GPIO(MP9) & CAN CMD which is toggle switch before instead of toggle switch. //KMS241112_1
+  - To remove noise upon Play/Stop or Source change(KMS241112_1), some codes are disabled which is related with CAN Tx message. //KMS241112_2
